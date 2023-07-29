@@ -28,9 +28,9 @@ class App(customtkinter.CTk):
         self.checkbox_0 = customtkinter.CTkCheckBox(master=self.checkbox_slider_frame, text="Show grid")
         self.checkbox_0.grid(row=2, column=0, pady=(20, 0), padx=20, sticky="n")
 
-        self.workingPlace = customtkinter.CTkTextbox(self, width=250)
-        self.workingPlace.grid(row=0, column=1, padx=(20, 20), pady=(20, 20), sticky="nsew")
-
+        self.canvas = customtkinter.CTkCanvas(self, height=700, bg="white")
+        self.canvas.grid(row=0, column=1, padx=(20, 20), pady=(20, 20), sticky="nsew")
+        self.place_300x300_block(self)
 
 
 
@@ -49,8 +49,10 @@ class App(customtkinter.CTk):
     @staticmethod
     def checkbox_checked(checkbox_name):
         print(f"Naciśnięto checkboxa o nazwie: {checkbox_name}")
-
-
+   
+    @staticmethod
+    def place_300x300_block(self):
+        self.canvas.create_rectangle(0, 0, 300, 300, fill='blue')
 
 
 
