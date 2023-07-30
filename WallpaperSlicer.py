@@ -1,6 +1,35 @@
 import tkinter
 import tkinter.messagebox
 import customtkinter
+from PIL import Image, ImageTk
+from tkinter import filedialog
+
+
+
+class Square:
+    def __init__(self, canvas, x, y, width, height, color, tag):
+        self.canvas = canvas
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.tag = tag
+        self.color = color
+
+        self.shape = self.canvas.create_rectangle(x, y, x + width, y + height, fill=color, tag=tag)
+        self.canvas.tag_bind(self.shape, '<B1-Motion>', self.move)
+
+    def move(self, event):
+        dx = event.x - self.x - self.width // 2
+        dy = event.y - self.y - self.height // 2
+        self.canvas.move(self.shape, dx, dy)
+        self.x += dx
+        self.y += dy
+
+    def remove(self,tag):
+       self.canvas.delete( self.canvas.find_withtag(tag))
+
+
 
 
 class App(customtkinter.CTk):
@@ -21,17 +50,31 @@ class App(customtkinter.CTk):
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
         self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Load screens info", command=self.getting_screen_data)
         self.sidebar_button_1.grid(row=1, column=0, padx=20, pady=10)
+        self.sidebar_button_2 = customtkinter.CTkButton(self.sidebar_frame, text="Load screens image", command=self.getting_image_data)
+        self.sidebar_button_2.grid(row=2, column=0, padx=20, pady=10)       
         
-        self.checkbox_slider_frame = customtkinter.CTkFrame(self.sidebar_frame)
-        self.checkbox_slider_frame.grid(row=2, column=0, padx=(20, 20), pady=(20, 0), sticky="nsew")
+        self.checkbox_0 = customtkinter.CTkCheckBox(self.sidebar_frame, text="Show grid")
+        self.checkbox_0.grid(row=3, column=0, pady=(20, 0), padx=20, sticky="n")
 
-        self.checkbox_0 = customtkinter.CTkCheckBox(master=self.checkbox_slider_frame, text="Show grid")
-        self.checkbox_0.grid(row=2, column=0, pady=(20, 0), padx=20, sticky="n")
+        self.checkbox_slider_frame = customtkinter.CTkFrame(self.sidebar_frame)
+        self.checkbox_slider_frame.grid(row=4, column=0, padx=(20, 20), pady=(20, 0), sticky="nsew")
+
+
 
         self.canvas = customtkinter.CTkCanvas(self, height=700, bg="white")
         self.canvas.grid(row=0, column=1, padx=(20, 20), pady=(20, 20), sticky="nsew")
-        self.place_300x300_block(self)
 
+
+
+
+
+    def getting_image_data(self):
+        file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.png;*.jpg;*.jpeg;*.gif")])
+        if file_path:
+            self.image = Image.open(file_path)
+            self.image_tk = ImageTk.PhotoImage(self.image)
+            self.image_item = self.canvas.create_image(0, 0, anchor=customtkinter.NW, image=self.image_tk)
+            self.canvas.lower(self.image_item)
 
 
     def getting_screen_data(self):
@@ -41,19 +84,19 @@ class App(customtkinter.CTk):
         self.checkboxes = []
         for i, monitors in enumerate(listOfMonitors):
             checkbox_name = f"checkbox_{i+1}"
-            checkbox = customtkinter.CTkCheckBox(master=self.checkbox_slider_frame, text=f"{monitors[1]} : {monitors[2]}x{monitors[3]}")
+            checkbox = customtkinter.CTkCheckBox(self.checkbox_slider_frame, text=f"{monitors[1]} : {monitors[2]}x{monitors[3]}")
             checkbox.grid(row=i+3, column=0, pady=(20, 0), padx=20, sticky="n")
             self.checkboxes.append(checkbox)   
-            checkbox.configure(command=lambda name=checkbox_name: self.checkbox_checked(name))
+            checkbox.configure(command=lambda: self.create_or_delete_rectangle(checkbox,monitors[1],monitors[2],monitors[3]))
 
-    @staticmethod
-    def checkbox_checked(checkbox_name):
-        print(f"Naciśnięto checkboxa o nazwie: {checkbox_name}")
-   
-    @staticmethod
-    def place_300x300_block(self):
-        self.canvas.create_rectangle(0, 0, 300, 300, fill='blue')
 
+    def create_or_delete_rectangle(self,checkbox,name,width,height):
+        if checkbox.get():
+            square = Square(self.canvas, 10, 10, width, height, color='red', tag=name)
+            #self.squares.append(square)
+        else: 
+            Square.remove(self,tag=name)
+    
 
 
 if __name__ == "__main__":
