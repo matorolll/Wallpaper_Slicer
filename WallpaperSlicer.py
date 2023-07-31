@@ -15,13 +15,15 @@ class Square:
         self.height = height
         self.tag = tag
         self.color = color
+        self.zoom_factor = 1.0  # Initial zoom factor for the square
+
 
         self.shape = self.canvas.create_rectangle(x, y, x + width, y + height, fill=color, tag=tag)
         self.canvas.tag_bind(self.shape, '<B1-Motion>', self.move)
 
     def move(self, event):
-        dx = event.x - self.x - self.width // 2
-        dy = event.y - self.y - self.height // 2
+        dx = (event.x - self.x - self.width // 2) / self.zoom_factor
+        dy = (event.y - self.y - self.height // 2) / self.zoom_factor
         self.canvas.move(self.shape, dx, dy)
         self.x += dx
         self.y += dy
@@ -29,7 +31,8 @@ class Square:
     def remove(self,tag):
        self.canvas.delete( self.canvas.find_withtag(tag))
 
-
+    def set_zoom_factor(self, zoom_factor):
+        self.zoom_factor = zoom_factor
 
 
 class App(customtkinter.CTk):
@@ -59,11 +62,10 @@ class App(customtkinter.CTk):
         self.checkbox_slider_frame = customtkinter.CTkFrame(self.sidebar_frame)
         self.checkbox_slider_frame.grid(row=4, column=0, padx=(20, 20), pady=(20, 0), sticky="nsew")
 
-
-
         self.canvas = customtkinter.CTkCanvas(self, height=700, bg="white")
         self.canvas.grid(row=0, column=1, padx=(20, 20), pady=(20, 20), sticky="nsew")
 
+        self.canvas.bind("<MouseWheel>", self.zoom_image)
 
 
 
@@ -75,6 +77,24 @@ class App(customtkinter.CTk):
             self.image_tk = ImageTk.PhotoImage(self.image)
             self.image_item = self.canvas.create_image(0, 0, anchor=customtkinter.NW, image=self.image_tk)
             self.canvas.lower(self.image_item)
+            self.zoom_factor = 1.0
+
+    def zoom_image(self, event):
+        if event.delta > 0:
+            self.zoom_factor *= 1.2
+        else:
+            self.zoom_factor /= 1.2
+
+        width = int(self.image.width * self.zoom_factor)
+        height = int(self.image.height * self.zoom_factor)
+        resized_image = self.image.resize((width, height), Image.ANTIALIAS)
+        self.image_tk = ImageTk.PhotoImage(resized_image)
+        self.canvas.itemconfig(self.image_item, image=self.image_tk)
+        self.canvas.config(scrollregion=self.canvas.bbox("all"))
+
+
+
+
 
 
     def getting_screen_data(self):
