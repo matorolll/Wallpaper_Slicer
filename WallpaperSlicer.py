@@ -7,7 +7,7 @@ from tkinter import filedialog
 
 
 class Square:
-    def __init__(self, canvas, x, y, width, height, color, tag):
+    def __init__(self, canvas, x, y, width, height, color, tag, zoom_factor):
         self.canvas = canvas
         self.x = x
         self.y = y
@@ -15,14 +15,14 @@ class Square:
         self.height = height
         self.tag = tag
         self.color = color
-        self.zoom_factor = 1.0
+        self.zoom_factor = zoom_factor
 
-        self.shape = self.canvas.create_rectangle(x, y, x + width, y + height, fill=color, tag=tag)
+        self.shape = self.canvas.create_rectangle(x, y, x + (width * zoom_factor) , y + (height * zoom_factor), fill=color, tag=tag)
         self.canvas.tag_bind(self.shape, '<B1-Motion>', self.move)
 
     def move(self, event):
-        dx = (event.x - self.x - self.width // 2) / self.zoom_factor
-        dy = (event.y - self.y - self.height // 2) / self.zoom_factor
+        dx = (event.x - self.x - (self.width * self.zoom_factor) // 2)
+        dy = (event.y - self.y - (self.height * self.zoom_factor) // 2)
         self.canvas.move(self.shape, dx, dy)
         self.x += dx
         self.y += dy
@@ -30,8 +30,10 @@ class Square:
     def remove(self,tag):
        self.canvas.delete( self.canvas.find_withtag(tag))
 
+
     def set_zoom_factor(self, zoom_factor):
         self.zoom_factor = zoom_factor
+        self.canvas.coords(self.shape, self.x, self.y, self.x + (self.width * zoom_factor),  self.y + (self.height * zoom_factor))
 
 
 
@@ -65,12 +67,17 @@ class App(customtkinter.CTk):
         self.canvas = customtkinter.CTkCanvas(self, height=700, bg="white")
         self.canvas.grid(row=0, column=1, padx=(20, 20), pady=(20, 20), sticky="nsew")
 
-        self.canvas.bind("<MouseWheel>", self.zoom_image)
+        self.canvas.bind("<MouseWheel>", self.zoom_event)
+
+        self.squares = []
 
 
-        self.zoom_factor = 1.0  # Initialize the zoom factor
-        self.zoom_label = customtkinter.CTkLabel(self.sidebar_frame, text="Zoom Level: 100%", font=customtkinter.CTkFont(size=12))
+        self.zoom_factor = .2
+
+        self.zoom_label = customtkinter.CTkLabel(self.sidebar_frame, text=f"Zoom Level: {self.zoom_factor*100}", font=customtkinter.CTkFont(size=12))
         self.zoom_label.grid(row=5, column=0, padx=20, pady=(20, 10))
+
+
 
 
     def getting_image_data(self):
@@ -80,24 +87,35 @@ class App(customtkinter.CTk):
             self.image_tk = ImageTk.PhotoImage(self.image)
             self.image_item = self.canvas.create_image(0, 0, anchor=customtkinter.NW, image=self.image_tk)
             self.canvas.lower(self.image_item)
-            self.zoom_factor = 1.0
+            self.apply_zoom_img()
 
-    def zoom_image(self, event):
+
+    def zoom_event(self, event):
         if event.delta > 0:
             self.zoom_factor *= 1.2
         else:
             self.zoom_factor /= 1.2
+        self.apply_zoom_img()
+        self.apply_zoom_square()
 
-        width = int(self.image.width * self.zoom_factor)
-        height = int(self.image.height * self.zoom_factor)
-        resized_image = self.image.resize((width, height), Image.ANTIALIAS)
-        self.image_tk = ImageTk.PhotoImage(resized_image)
-        self.canvas.itemconfig(self.image_item, image=self.image_tk)
-        self.canvas.config(scrollregion=self.canvas.bbox("all"))
-        
-        zoom_percentage = int(self.zoom_factor * 100)
-        self.zoom_label.configure(text=f"Zoom Level: {zoom_percentage}%")
 
+    def apply_zoom_square(self):
+        for square in self.squares:
+            square.set_zoom_factor(self.zoom_factor)
+
+
+    def apply_zoom_img(self):
+        if self.image_item is not None:
+            width = int(self.image.width * self.zoom_factor)
+            height = int(self.image.height * self.zoom_factor)
+            resized_image = self.image.resize((width, height), Image.ANTIALIAS)
+            self.image_tk = ImageTk.PhotoImage(resized_image)
+            self.canvas.itemconfig(self.image_item, image=self.image_tk)
+            self.canvas.config(scrollregion=self.canvas.bbox("all"))
+
+            # Update the zoom level label
+            zoom_percentage = int(self.zoom_factor * 100)
+            self.zoom_label.configure(text=f"Zoom Level: {zoom_percentage}%")
 
 
     def getting_screen_data(self):
@@ -115,8 +133,8 @@ class App(customtkinter.CTk):
 
     def create_or_delete_rectangle(self,checkbox,name,width,height):
         if checkbox.get():
-            square = Square(self.canvas, 10, 10, width*self.zoom_factor, height*self.zoom_factor, color='red', tag=name)
-            #self.squares.append(square)
+            square = Square(self.canvas, 10, 10, width, height, color='red', tag=name, zoom_factor=self.zoom_factor)
+            self.squares.append(square)
         else: 
             Square.remove(self,tag=name)
     
