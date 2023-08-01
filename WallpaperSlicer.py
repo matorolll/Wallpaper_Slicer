@@ -15,8 +15,7 @@ class Square:
         self.height = height
         self.tag = tag
         self.color = color
-        self.zoom_factor = 1.0  # Initial zoom factor for the square
-
+        self.zoom_factor = 1.0
 
         self.shape = self.canvas.create_rectangle(x, y, x + width, y + height, fill=color, tag=tag)
         self.canvas.tag_bind(self.shape, '<B1-Motion>', self.move)
@@ -33,6 +32,7 @@ class Square:
 
     def set_zoom_factor(self, zoom_factor):
         self.zoom_factor = zoom_factor
+
 
 
 class App(customtkinter.CTk):
@@ -68,6 +68,9 @@ class App(customtkinter.CTk):
         self.canvas.bind("<MouseWheel>", self.zoom_image)
 
 
+        self.zoom_factor = 1.0  # Initialize the zoom factor
+        self.zoom_label = customtkinter.CTkLabel(self.sidebar_frame, text="Zoom Level: 100%", font=customtkinter.CTkFont(size=12))
+        self.zoom_label.grid(row=5, column=0, padx=20, pady=(20, 10))
 
 
     def getting_image_data(self):
@@ -91,9 +94,9 @@ class App(customtkinter.CTk):
         self.image_tk = ImageTk.PhotoImage(resized_image)
         self.canvas.itemconfig(self.image_item, image=self.image_tk)
         self.canvas.config(scrollregion=self.canvas.bbox("all"))
-
-
-
+        
+        zoom_percentage = int(self.zoom_factor * 100)
+        self.zoom_label.configure(text=f"Zoom Level: {zoom_percentage}%")
 
 
 
@@ -107,12 +110,12 @@ class App(customtkinter.CTk):
             checkbox = customtkinter.CTkCheckBox(self.checkbox_slider_frame, text=f"{monitors[1]} : {monitors[2]}x{monitors[3]}")
             checkbox.grid(row=i+3, column=0, pady=(20, 0), padx=20, sticky="n")
             self.checkboxes.append(checkbox)   
-            checkbox.configure(command=lambda: self.create_or_delete_rectangle(checkbox,monitors[1],monitors[2],monitors[3]))
+            checkbox.configure(command=lambda checkbox=checkbox, name=monitors[1], width=monitors[2], height=monitors[3]: self.create_or_delete_rectangle(checkbox, name, width, height))
 
 
     def create_or_delete_rectangle(self,checkbox,name,width,height):
         if checkbox.get():
-            square = Square(self.canvas, 10, 10, width, height, color='red', tag=name)
+            square = Square(self.canvas, 10, 10, width*self.zoom_factor, height*self.zoom_factor, color='red', tag=name)
             #self.squares.append(square)
         else: 
             Square.remove(self,tag=name)
