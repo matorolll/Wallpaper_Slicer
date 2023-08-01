@@ -1,54 +1,7 @@
-import tkinter
 import tkinter.messagebox
 import customtkinter
 from PIL import Image, ImageTk
 from tkinter import filedialog
-
-
-class MyDialog(tkinter.simpledialog.Dialog):
-    def __init__(self, parent, title):
-        self.my_username = None
-        self.my_password = None
-        super().__init__(parent, title)
-
-    def body(self, frame):
-        # print(type(frame)) # tkinter.Frame
-        self.my_username_label = tkinter.Label(frame, width=25, text="Username")
-        self.my_username_label.pack()
-        self.my_username_box = tkinter.Entry(frame, width=25)
-        self.my_username_box.pack()
-
-        self.my_password_label = tkinter.Label(frame, width=25, text="Password")
-        self.my_password_label.pack()
-        self.my_password_box = tkinter.Entry(frame, width=25)
-        self.my_password_box.pack()
-        self.my_password_box['show'] = '*'
-
-        return frame
-
-    def ok_pressed(self):
-        # print("ok")
-        self.my_username = self.my_username_box.get()
-        self.my_password = self.my_password_box.get()
-        self.destroy()
-
-    def cancel_pressed(self):
-        # print("cancel")
-        self.destroy()
-
-
-    def buttonbox(self):
-        self.ok_button = tkinter.Button(self, text='OK', width=5, command=self.ok_pressed)
-        self.ok_button.pack(side="left")
-        cancel_button = tkinter.Button(self, text='Cancel', width=5, command=self.cancel_pressed)
-        cancel_button.pack(side="right")
-        self.bind("<Return>", lambda event: self.ok_pressed())
-        self.bind("<Escape>", lambda event: self.cancel_pressed())
-
-def mydialog(app):
-    dialog = MyDialog(title="Login", parent=app)
-    return dialog.my_username, dialog.my_password
-
 
 class Square:
     def __init__(self, canvas, x, y, width, height, color, tag, zoom_factor):
@@ -113,7 +66,7 @@ class App(customtkinter.CTk):
         self.sidebar_button_2 = customtkinter.CTkButton(self.sidebar_frame, text="Load screens image", command=self.getting_image_data)
         self.sidebar_button_2.grid(row=2, column=0, padx=20, pady=10)       
         
-        self.checkbox_0 = customtkinter.CTkCheckBox(self.sidebar_frame, text="Show grid")
+        self.checkbox_0 = customtkinter.CTkButton(self.sidebar_frame, text="Crop Image", command=self.save_overlap)
         self.checkbox_0.grid(row=3, column=0, pady=(20, 0), padx=20, sticky="n")
 
         self.checkbox_slider_frame = customtkinter.CTkFrame(self.sidebar_frame)
@@ -227,7 +180,63 @@ class App(customtkinter.CTk):
         else: 
             Square.remove(self,tag=name)
     
+    def check_overlap(self):
+        if not self.squares:
+            tkinter.messagebox.showwarning("No Squares", "There are no squares to save.")
+            return
 
+
+        image_width = int(self.image.width)
+        image_height = int(self.image.height)
+        image = Image.new("RGBA", (image_width, image_height), (255, 255, 255, 0))
+
+
+
+        for i, square in enumerate(self.squares):
+            x1 = int(square.x/square.zoom_factor)
+            y1 = int(square.y/square.zoom_factor)
+            x2 = int(square.width + square.x/square.zoom_factor)
+            y2 = int(square.height + square.y/square.zoom_factor)
+
+            area_image = self.image.crop((x1, y1, x2, y2))
+            image.paste(area_image,(x2,y2))
+
+            file_path = f"img{i+1}.png"
+            image.save(file_path)
+
+
+        tkinter.messagebox.showinfo("Images Saved", f"{len(self.squares)} images saved successfully!")
+
+
+
+    def check_overlap(self):
+        overlap_images = []
+        for i, square in enumerate(self.squares):
+            overlap_image = Image.new("RGBA", (int(self.image.width), int(self.image.height)))
+            x1 = int(square.x/square.zoom_factor)
+            y1 = int(square.y/square.zoom_factor)
+            x2 = int(square.width + square.x/square.zoom_factor)
+            y2 = int(square.height + square.y/square.zoom_factor)
+            img = Image.new("RGBA", (x2, y2), square.color)
+            overlap_image.paste(img, (x2, y2), img)
+
+            cropped_image = self.image.crop((x1,y1,x2,y2))
+            alpha = overlap_image.split()[3]  # Pobieramy kanał alpha (wartość przezroczystości)
+            cropped_image.paste(overlap_image, (x2, y2), alpha)  # Nakładamy obraz z kanałem alpha na obraz tła
+
+            overlap_images.append(cropped_image)
+
+        return overlap_images
+
+
+
+
+
+    def save_overlap(self):
+        overlap_images = self.check_overlap()
+        for i, cropped_image in enumerate(overlap_images):
+            file_path = f"img{i+1}.png"
+            cropped_image.save(file_path)
 
 if __name__ == "__main__":
     app = App()
