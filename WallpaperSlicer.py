@@ -14,31 +14,41 @@ class Square:
         self.color = color
         self.zoom_factor = zoom_factor
 
-        self.shape = self.canvas.create_rectangle(x, y, x + (width * zoom_factor) , y + (height * zoom_factor), fill=color, tag=tag)
-        self.canvas.tag_bind(self.shape, '<B1-Motion>', self.move)
-        self.canvas.tag_bind(self.shape, '<Double-Button-1>', self.on_double_click)
+        self.x_relative_to_mouse = None
+        self.y_relative_to_mouse = None
 
+        self.shape = self.canvas.create_rectangle(x , y, x + (width * zoom_factor) , y + (height * zoom_factor), fill=color, tag=tag)
+        self.canvas.tag_bind(self.shape, '<B1-Motion>', self.move)
+        self.canvas.tag_bind(self.shape, '<Button-1>', self.get_mouse_position)
+
+        self.canvas.tag_bind(self.shape, '<Double-Button-1>', self.on_double_click)
 
 
     def update(self):
         self.canvas.coords(self.shape, self.x, self.y, self.x + (self.width * self.zoom_factor), self.y + (self.height * self.zoom_factor))
 
 
+    def get_mouse_position(self, event):
+        self.x_relative_to_mouse = event.x
+        self.y_relative_to_mouse = event.y
+
     def move(self, event):
-        dx = (event.x - self.x - (self.width * self.zoom_factor) // 2)
-        dy = (event.y - self.y - (self.height * self.zoom_factor) // 2)
-        self.canvas.move(self.shape, dx, dy)
-        self.x += dx
-        self.y += dy
+        if self.x_relative_to_mouse is not None and self.y_relative_to_mouse is not None:
+            dx = event.x - self.x_relative_to_mouse
+            dy = event.y - self.y_relative_to_mouse
+            self.canvas.move(self.shape, dx, dy)
+            self.x_relative_to_mouse = event.x
+            self.y_relative_to_mouse = event.y
+            self.x += dx
+            self.y += dy
+
 
     def remove(self,tag):
-       self.canvas.delete( self.canvas.find_withtag(tag))
-
+       self.canvas.delete(self.canvas.find_withtag(tag))
 
     def set_zoom_factor(self, zoom_factor):
         self.zoom_factor = zoom_factor
-        self.canvas.coords(self.shape, self.x, self.y, self.x + (self.width * zoom_factor),  self.y + (self.height * zoom_factor))
-
+        self.update()
 
     def on_double_click(self, event):
         app.on_double_click_create_app_boxes(self)
@@ -160,7 +170,7 @@ class App(customtkinter.CTk):
                 zoom_percentage = int(self.zoom_factor * 100)
                 self.zoom_label.configure(text=f"Zoom Level: {zoom_percentage}%",text_color='white')
         except AttributeError:
-            self.zoom_label.configure(text="Need to choose img first in order to zoom!", font=customtkinter.CTkFont(size=12), text_color='red')
+            self.zoom_label.configure(text="Need to choose img", font=customtkinter.CTkFont(size=12), text_color='red')
 
     def getting_screen_data(self):
         import gettingsScreens
