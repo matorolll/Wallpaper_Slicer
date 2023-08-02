@@ -13,15 +13,18 @@ class Square:
         self.tag = tag
         self.color = color
         self.zoom_factor = zoom_factor
+        
 
         self.x_relative_to_mouse = None
         self.y_relative_to_mouse = None
 
-        self.shape = self.canvas.create_rectangle(x , y, x + (width * zoom_factor) , y + (height * zoom_factor), fill=color, tag=tag)
+
+        self.shape = self.canvas.create_rectangle(x , y, x + (width * zoom_factor) , y + (height * zoom_factor), fill=color, tag=tag, outline='red', width=2, stipple="gray50")
+
         self.canvas.tag_bind(self.shape, '<B1-Motion>', self.move)
         self.canvas.tag_bind(self.shape, '<Button-1>', self.get_mouse_position)
-
         self.canvas.tag_bind(self.shape, '<Double-Button-1>', self.on_double_click)
+
 
 
     def update(self):
@@ -79,8 +82,12 @@ class App(customtkinter.CTk):
         self.checkbox_0 = customtkinter.CTkButton(self.sidebar_frame, text="Crop Image", command=self.save_overlap)
         self.checkbox_0.grid(row=3, column=0, pady=(20, 0), padx=20, sticky="n")
 
+        self.checkbox_1 = customtkinter.CTkCheckBox(self.sidebar_frame, text="Scroll Squares",command=self.Settings)
+        self.checkbox_1.grid(row=4, column=0, pady=(20, 0), padx=20, sticky="n")
+
+
         self.checkbox_slider_frame = customtkinter.CTkFrame(self.sidebar_frame)
-        self.checkbox_slider_frame.grid(row=4, column=0, padx=(20, 20), pady=(20, 0), sticky="nsew")
+        self.checkbox_slider_frame.grid(row=5, column=0, padx=(20, 20), pady=(20, 0), sticky="nsew")
 
         self.canvas = customtkinter.CTkCanvas(self, height=1000, bg="white")
         self.canvas.grid(row=0, column=1, padx=(20, 20), pady=(20, 20), sticky="nsew")
@@ -89,8 +96,14 @@ class App(customtkinter.CTk):
         self.squares = []
         self.zoom_factor = .2
         self.zoom_label = customtkinter.CTkLabel(self.sidebar_frame, text=f"Zoom Level: {self.zoom_factor*100}%", font=customtkinter.CTkFont(size=12))
-        self.zoom_label.grid(row=5, column=0, padx=20, pady=(20, 10))
-      
+        self.zoom_label.grid(row=6, column=0, padx=20, pady=(20, 10))
+
+    def Settings(self): #ToDO
+        if(self.checkbox_1.get()):
+            print("checkbox_1 is pressed")
+        else:
+            print("checkbox_1 is not pressed")
+
 
 
     def on_double_click_create_app_boxes(self,square): 
@@ -112,7 +125,6 @@ class App(customtkinter.CTk):
         self.edit_size_slider = customtkinter.CTkSlider(self.sidebar_frame,from_=0, to=1, number_of_steps=4,  command=lambda value: self.change_square_size(square,"both"))
         self.edit_size_slider.grid(row=11, column=0, padx=(20, 10), pady=(10, 10), sticky="ew") 
 
-
     def change_square_size(self,square,scalling):
         if(scalling == "width"):
             square.width = int(self.edit_width_slider.get() * (self.old_width+self.old_width))
@@ -125,10 +137,6 @@ class App(customtkinter.CTk):
             square.height = int(self.edit_size_slider.get() * (self.old_height+self.old_height))
             self.edit_size_slider_text.configure(text=f"Both: {square.width}x{square.height}")
         square.update()
-
-
-    
-
 
     def show_square_data(self, square):
         self.square_data_label.configure(text=f"Selected Square: Width: {square.width}, Height: {square.height}")
@@ -231,8 +239,8 @@ class App(customtkinter.CTk):
             overlap_image.paste(img, (x2, y2), img)
 
             cropped_image = self.image.crop((x1,y1,x2,y2))
-            alpha = overlap_image.split()[3]  # Pobieramy kanał alpha (wartość przezroczystości)
-            cropped_image.paste(overlap_image, (x2, y2), alpha)  # Nakładamy obraz z kanałem alpha na obraz tła
+            alpha = overlap_image.split()[3]
+            cropped_image.paste(overlap_image, (x2, y2), alpha)
 
             overlap_images.append(cropped_image)
 
