@@ -13,8 +13,7 @@ class Square:
         self.tag = tag
         self.color = color
         self.zoom_factor = zoom_factor
-        
-
+    
         self.x_relative_to_mouse = None
         self.y_relative_to_mouse = None
 
@@ -25,11 +24,24 @@ class Square:
         self.canvas.tag_bind(self.shape, '<Button-1>', self.get_mouse_position)
         self.canvas.tag_bind(self.shape, '<Double-Button-1>', self.on_double_click)
 
-
-
     def update(self):
         self.canvas.coords(self.shape, self.x, self.y, self.x + (self.width * self.zoom_factor), self.y + (self.height * self.zoom_factor))
+        print(self.check_collision())
 
+
+
+
+
+    def check_collision(self):
+        overlapping_objects = self.canvas.find_overlapping(
+            self.x, self.y, self.x + (self.width * self.zoom_factor),
+            self.y + (self.height * self.zoom_factor))
+        overlapping_objects = [obj for obj in overlapping_objects if obj != self.shape]
+        return len(overlapping_objects) > 0
+
+
+
+    
 
     def get_mouse_position(self, event):
         self.x_relative_to_mouse = event.x
@@ -44,6 +56,8 @@ class Square:
             self.y_relative_to_mouse = event.y
             self.x += dx
             self.y += dy
+            self.update()
+
 
 
     def remove(self,tag):
@@ -82,8 +96,9 @@ class App(customtkinter.CTk):
         self.checkbox_0 = customtkinter.CTkButton(self.sidebar_frame, text="Crop Image", command=self.save_overlap)
         self.checkbox_0.grid(row=3, column=0, pady=(20, 0), padx=20, sticky="n")
 
-        self.checkbox_1 = customtkinter.CTkCheckBox(self.sidebar_frame, text="Scroll Squares",command=self.Settings)
+        self.checkbox_1 = customtkinter.CTkCheckBox(self.sidebar_frame, text="Rescale square with image")
         self.checkbox_1.grid(row=4, column=0, pady=(20, 0), padx=20, sticky="n")
+        self.checkbox_1.select()
 
 
         self.checkbox_slider_frame = customtkinter.CTkFrame(self.sidebar_frame)
@@ -94,16 +109,9 @@ class App(customtkinter.CTk):
 
         self.canvas.bind("<MouseWheel>", self.zoom_event)
         self.squares = []
-        self.zoom_factor = .2
+        self.zoom_factor = 0.2
         self.zoom_label = customtkinter.CTkLabel(self.sidebar_frame, text=f"Zoom Level: {self.zoom_factor*100}%", font=customtkinter.CTkFont(size=12))
         self.zoom_label.grid(row=6, column=0, padx=20, pady=(20, 10))
-
-    def Settings(self): #ToDO
-        if(self.checkbox_1.get()):
-            print("checkbox_1 is pressed")
-        else:
-            print("checkbox_1 is not pressed")
-
 
 
     def on_double_click_create_app_boxes(self,square): 
@@ -112,17 +120,17 @@ class App(customtkinter.CTk):
 
         self.edit_width_slider_text = customtkinter.CTkLabel(self.sidebar_frame, text=f"Width: {square.width}", font=customtkinter.CTkFont(size=20, weight="bold"))
         self.edit_width_slider_text.grid(row=6, column=0, padx=(20, 10), pady=(10, 10), sticky="ew")
-        self.edit_width_slider = customtkinter.CTkSlider(self.sidebar_frame,from_=0, to=1, number_of_steps=9, command=lambda value: self.change_square_size(square,"width"))
+        self.edit_width_slider = customtkinter.CTkSlider(self.sidebar_frame,from_=0, to=1, number_of_steps=20, command=lambda value: self.change_square_size(square,"width"))
         self.edit_width_slider.grid(row=7, column=0, padx=(20, 10), pady=(10, 10), sticky="ew")
 
         self.edit_height_slider_text = customtkinter.CTkLabel(self.sidebar_frame, text=f"Height: {square.height}", font=customtkinter.CTkFont(size=20, weight="bold"))
         self.edit_height_slider_text.grid(row=8, column=0, padx=(20, 10), pady=(10, 10), sticky="ew")
-        self.edit_height_slider = customtkinter.CTkSlider(self.sidebar_frame,from_=0, to=1, number_of_steps=4,  command=lambda value: self.change_square_size(square,"height"))
+        self.edit_height_slider = customtkinter.CTkSlider(self.sidebar_frame,from_=0, to=1, number_of_steps=20,  command=lambda value: self.change_square_size(square,"height"))
         self.edit_height_slider.grid(row=9, column=0, padx=(20, 10), pady=(10, 10), sticky="ew") 
 
         self.edit_size_slider_text = customtkinter.CTkLabel(self.sidebar_frame, text=f"Both: {square.width}x{square.height}", font=customtkinter.CTkFont(size=20, weight="bold"))
         self.edit_size_slider_text.grid(row=10, column=0, padx=(20, 10), pady=(10, 10), sticky="ew")
-        self.edit_size_slider = customtkinter.CTkSlider(self.sidebar_frame,from_=0, to=1, number_of_steps=4,  command=lambda value: self.change_square_size(square,"both"))
+        self.edit_size_slider = customtkinter.CTkSlider(self.sidebar_frame,from_=0, to=1, number_of_steps=20,  command=lambda value: self.change_square_size(square,"both"))
         self.edit_size_slider.grid(row=11, column=0, padx=(20, 10), pady=(10, 10), sticky="ew") 
 
     def change_square_size(self,square,scalling):
@@ -163,8 +171,9 @@ class App(customtkinter.CTk):
         self.apply_zoom_square()
 
     def apply_zoom_square(self):
-        for square in self.squares:
-            square.set_zoom_factor(self.zoom_factor)
+        if(self.checkbox_1.get()):
+            for square in self.squares:
+                square.set_zoom_factor(self.zoom_factor)
 
     def apply_zoom_img(self):
         try:
@@ -178,7 +187,9 @@ class App(customtkinter.CTk):
                 zoom_percentage = int(self.zoom_factor * 100)
                 self.zoom_label.configure(text=f"Zoom Level: {zoom_percentage}%",text_color='white')
         except AttributeError:
-            self.zoom_label.configure(text="Need to choose img", font=customtkinter.CTkFont(size=12), text_color='red')
+            zoom_percentage = int(self.zoom_factor * 100)
+            self.zoom_label.configure(text=f"Zoom Level: {zoom_percentage}%",text_color='white')
+
 
     def getting_screen_data(self):
         import gettingsScreens
@@ -199,6 +210,7 @@ class App(customtkinter.CTk):
             Square.remove(self,tag=name)
     
     def check_overlap(self):
+        print("checking overlap")
         if not self.squares:
             tkinter.messagebox.showwarning("No Squares", "There are no squares to save.")
             return
@@ -221,6 +233,7 @@ class App(customtkinter.CTk):
 
             file_path = f"img{i+1}.png"
             image.save(file_path)
+            print("saving files")
 
 
         tkinter.messagebox.showinfo("Images Saved", f"{len(self.squares)} images saved successfully!")
@@ -251,6 +264,7 @@ class App(customtkinter.CTk):
 
 
     def save_overlap(self):
+        print("save_overlap")
         overlap_images = self.check_overlap()
         for i, cropped_image in enumerate(overlap_images):
             file_path = f"img{i+1}.png"
