@@ -18,30 +18,54 @@ class Square:
         self.y_relative_to_mouse = None
 
 
-        self.shape = self.canvas.create_rectangle(x , y, x + (width * zoom_factor) , y + (height * zoom_factor), fill=color, tag=tag, outline='red', width=2, stipple="gray50")
+        self.shape = self.canvas.create_rectangle(x,
+                                                  y,
+                                                  x + (width * zoom_factor),
+                                                  y + (height * zoom_factor),
+                                                  fill=color,
+                                                  tag=tag,
+                                                  outline='red',
+                                                  width=2,
+                                                  stipple="gray50")
 
         self.canvas.tag_bind(self.shape, '<B1-Motion>', self.move)
         self.canvas.tag_bind(self.shape, '<Button-1>', self.get_mouse_position)
         self.canvas.tag_bind(self.shape, '<Double-Button-1>', self.on_double_click)
+        self.canvas.tag_bind(self.shape, '<ButtonRelease-1>', self.fix_collision)
+
 
     def update(self):
         self.canvas.coords(self.shape, self.x, self.y, self.x + (self.width * self.zoom_factor), self.y + (self.height * self.zoom_factor))
-        print(self.check_collision())
 
 
+    def fix_collision(self, event):
+        while True:
+            overlapping_objects = self.canvas.find_overlapping(
+                self.x, self.y, self.x + (self.width * self.zoom_factor),
+                self.y + (self.height * self.zoom_factor))
+            overlapping_objects = [obj for obj in overlapping_objects if obj != self.shape]
+            if not overlapping_objects: break
 
+            obj = overlapping_objects[0]
+            bbox = self.canvas.bbox(obj)
+            obj_center_x = (bbox[0] + bbox[2]) / 2
+            obj_center_y = (bbox[1] + bbox[3]) / 2
+            square_center_x = self.x + self.width * self.zoom_factor / 2
+            square_center_y = self.y + self.height * self.zoom_factor / 2
+            dx = obj_center_x - square_center_x
+            dy = obj_center_y - square_center_y
 
+            if abs(dx) > abs(dy):
+                if dx < 0: self.x += 1
+                else: self.x -= 1
+            else:
+                if dy < 0:  self.y += 1
+                else: self.y -= 1
 
-    def check_collision(self):
-        overlapping_objects = self.canvas.find_overlapping(
-            self.x, self.y, self.x + (self.width * self.zoom_factor),
-            self.y + (self.height * self.zoom_factor))
-        overlapping_objects = [obj for obj in overlapping_objects if obj != self.shape]
-        return len(overlapping_objects) > 0
+            self.update()
 
+        self.update()
 
-
-    
 
     def get_mouse_position(self, event):
         self.x_relative_to_mouse = event.x
@@ -56,7 +80,6 @@ class Square:
             self.y_relative_to_mouse = event.y
             self.x += dx
             self.y += dy
-            self.update()
 
 
 
@@ -122,16 +145,81 @@ class App(customtkinter.CTk):
         self.edit_width_slider_text.grid(row=6, column=0, padx=(20, 10), pady=(10, 10), sticky="ew")
         self.edit_width_slider = customtkinter.CTkSlider(self.sidebar_frame,from_=0, to=1, number_of_steps=20, command=lambda value: self.change_square_size(square,"width"))
         self.edit_width_slider.grid(row=7, column=0, padx=(20, 10), pady=(10, 10), sticky="ew")
+        self.edit_width_slider_text.bind("<Double-Button-1>", command=lambda value: self.change_square_size_precisely(square,"width"))
+
 
         self.edit_height_slider_text = customtkinter.CTkLabel(self.sidebar_frame, text=f"Height: {square.height}", font=customtkinter.CTkFont(size=20, weight="bold"))
         self.edit_height_slider_text.grid(row=8, column=0, padx=(20, 10), pady=(10, 10), sticky="ew")
         self.edit_height_slider = customtkinter.CTkSlider(self.sidebar_frame,from_=0, to=1, number_of_steps=20,  command=lambda value: self.change_square_size(square,"height"))
         self.edit_height_slider.grid(row=9, column=0, padx=(20, 10), pady=(10, 10), sticky="ew") 
+        self.edit_height_slider_text.bind("<Double-Button-1>", command=lambda value: self.change_square_size_precisely(square,"height"))
+
 
         self.edit_size_slider_text = customtkinter.CTkLabel(self.sidebar_frame, text=f"Both: {square.width}x{square.height}", font=customtkinter.CTkFont(size=20, weight="bold"))
         self.edit_size_slider_text.grid(row=10, column=0, padx=(20, 10), pady=(10, 10), sticky="ew")
         self.edit_size_slider = customtkinter.CTkSlider(self.sidebar_frame,from_=0, to=1, number_of_steps=20,  command=lambda value: self.change_square_size(square,"both"))
         self.edit_size_slider.grid(row=11, column=0, padx=(20, 10), pady=(10, 10), sticky="ew") 
+        self.edit_size_slider_text.bind("<Double-Button-1>", command=lambda value: self.change_square_size_precisely(square,"both"))
+
+
+    #TO CHANGEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+    def change_square_size_precisely(self,square,scalling):
+        if(scalling == "width"):
+            popup_window = tkinter.Tk()
+            popup_window.title("Precise Size Edit")
+            popup_window.geometry("300x200")
+            def save_changes():
+                try:
+                    new_width = float(entry.get())
+                    if new_width >= 0:
+                        square.width = new_width
+                        popup_window.destroy()
+                    else:
+                        raise ValueError("Width must be a non-negative number.")
+                except ValueError as e:
+                    tkinter.messagebox.showerror("Error", str(e))
+            label = tkinter.Label(popup_window, text="Enter new width:")
+            label.pack(pady=10)
+            entry = tkinter.Entry(popup_window)
+            entry.pack(pady=5)
+            button = tkinter.Button(popup_window, text="Save", command=save_changes)
+            button.pack(pady=10)
+            popup_window.mainloop()
+            
+
+        if(scalling == "height"):
+            popup_window = tkinter.Tk()
+            popup_window.title("Precise Size Edit")
+            popup_window.geometry("300x200")
+            def save_changes():
+                try:
+                    new_height = float(entry.get())
+                    if new_height >= 0:
+                        square.height = new_height
+                        popup_window.destroy()
+                    else:
+                        raise ValueError("Width must be a non-negative number.")
+                except ValueError as e:
+                    tkinter.messagebox.showerror("Error", str(e))
+            label = tkinter.Label(popup_window, text="Enter new width:")
+            label.pack(pady=10)
+            entry = tkinter.Entry(popup_window)
+            entry.pack(pady=5)
+            button = tkinter.Button(popup_window, text="Save", command=save_changes)
+            button.pack(pady=10)
+            popup_window.mainloop()
+
+
+
+
+        if(scalling == "both"):
+            square.width = int(self.edit_size_slider.get() * (self.old_width+self.old_width))
+            square.height = int(self.edit_size_slider.get() * (self.old_height+self.old_height))
+            self.edit_size_slider_text.configure(text=f"Both: {square.width}x{square.height}")
+        square.update()
+
+
+
 
     def change_square_size(self,square,scalling):
         if(scalling == "width"):
