@@ -22,26 +22,60 @@ class Square:
                                                   y,
                                                   x + (width * zoom_factor),
                                                   y + (height * zoom_factor),
+                                                  stipple="gray50",
+                                                  outline='red',
                                                   fill=color,
                                                   tag=tag,
-                                                  outline='red',
-                                                  width=2,
-                                                  stipple="gray50")
+                                                  width=2)
 
         self.canvas.tag_bind(self.shape, '<B1-Motion>', self.move)
         self.canvas.tag_bind(self.shape, '<Button-1>', self.get_mouse_position)
         self.canvas.tag_bind(self.shape, '<Double-Button-1>', self.on_double_click)
-        self.canvas.tag_bind(self.shape, '<ButtonRelease-1>', self.fix_collision)
+        self.canvas.tag_bind(self.shape, '<ButtonRelease-1>', self.collision_handler)
 
 
     def update(self):
-        self.canvas.coords(self.shape, self.x, self.y, self.x + (self.width * self.zoom_factor), self.y + (self.height * self.zoom_factor))
+        self.canvas.coords( self.shape,
+                            self.x,
+                            self.y,
+                            self.x + (self.width * self.zoom_factor),
+                            self.y + (self.height * self.zoom_factor))
+        
+    def remove(self,tag):
+        self.canvas.delete(self.canvas.find_withtag(tag))
 
 
-    def fix_collision(self, event):
+    def get_mouse_position(self, event):
+        self.x_relative_to_mouse = event.x
+        self.y_relative_to_mouse = event.y
+
+
+    def move(self, event):
+        if self.x_relative_to_mouse is not None and self.y_relative_to_mouse is not None:
+            dx = event.x - self.x_relative_to_mouse
+            dy = event.y - self.y_relative_to_mouse
+            self.canvas.move(self.shape, dx, dy)
+            self.x_relative_to_mouse = event.x
+            self.y_relative_to_mouse = event.y
+            self.x += dx
+            self.y += dy
+
+    def change_zoom_factor(self, zoom_factor):
+        self.zoom_factor = zoom_factor
+        self.collision_handler()
+        self.update()
+
+    def on_double_click(self, event):
+        app.on_double_click_create_app_boxes(self)
+
+
+    def collision_handler(self, *args):
+        anit_loop_counter = 0
         while True:
             overlapping_objects = self.canvas.find_overlapping(
-                self.x, self.y, self.x + (self.width * self.zoom_factor),
+                self.x,
+                self.y,
+                self.x + (self.width * self.zoom_factor),
                 self.y + (self.height * self.zoom_factor))
             overlapping_objects = [obj for obj in overlapping_objects if obj != self.shape]
             if not overlapping_objects: break
@@ -62,36 +96,13 @@ class Square:
                 if dy < 0:  self.y += 1
                 else: self.y -= 1
 
+            anit_loop_counter += 1
+            if anit_loop_counter == 100:
+                self.y -= 1
+                self.x -= 1
+                anit_loop_counter = 0
             self.update()
-
         self.update()
-
-
-    def get_mouse_position(self, event):
-        self.x_relative_to_mouse = event.x
-        self.y_relative_to_mouse = event.y
-
-    def move(self, event):
-        if self.x_relative_to_mouse is not None and self.y_relative_to_mouse is not None:
-            dx = event.x - self.x_relative_to_mouse
-            dy = event.y - self.y_relative_to_mouse
-            self.canvas.move(self.shape, dx, dy)
-            self.x_relative_to_mouse = event.x
-            self.y_relative_to_mouse = event.y
-            self.x += dx
-            self.y += dy
-
-
-
-    def remove(self,tag):
-       self.canvas.delete(self.canvas.find_withtag(tag))
-
-    def set_zoom_factor(self, zoom_factor):
-        self.zoom_factor = zoom_factor
-        self.update()
-
-    def on_double_click(self, event):
-        app.on_double_click_create_app_boxes(self)
 
 
 class App(customtkinter.CTk):
@@ -261,7 +272,10 @@ class App(customtkinter.CTk):
     def apply_zoom_square(self):
         if(self.checkbox_1.get()):
             for square in self.squares:
-                square.set_zoom_factor(self.zoom_factor)
+                square.change_zoom_factor(self.zoom_factor)
+
+
+
 
     def apply_zoom_img(self):
         try:
@@ -290,6 +304,7 @@ class App(customtkinter.CTk):
             self.checkboxes.append(checkbox)   
             checkbox.configure(command=lambda checkbox=checkbox, name=monitors[1], width=monitors[2], height=monitors[3]: self.create_or_delete_rectangle(checkbox, name, width, height))
 
+
     def create_or_delete_rectangle(self,checkbox,name,width,height):
         if checkbox.get():
             square = Square(self.canvas, 10, 10, width, height, color='red', tag=name, zoom_factor=self.zoom_factor)
@@ -297,6 +312,7 @@ class App(customtkinter.CTk):
         else: 
             Square.remove(self,tag=name)
     
+
     def check_overlap(self):
         print("checking overlap")
         if not self.squares:
