@@ -60,6 +60,7 @@ class Square:
             self.y_relative_to_mouse = event.y
             self.x += dx
             self.y += dy
+            
 
     def change_zoom_factor(self, zoom_factor):
         self.zoom_factor = zoom_factor
@@ -120,7 +121,7 @@ class App(customtkinter.CTk):
 
         self.sidebar_frame = customtkinter.CTkFrame(self, width=140, corner_radius=0)
         self.sidebar_frame.grid(row=0, column=0, rowspan=4, sticky="nsew")
-        self.sidebar_frame.grid_rowconfigure(9, weight=1)
+        self.sidebar_frame.grid_rowconfigure(10, weight=1)
         self.logo_label = customtkinter.CTkLabel(self.sidebar_frame, text="Side panel", font=customtkinter.CTkFont(size=20, weight="bold"))
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
         self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Load monitors info", command=self.getting_screen_data)
@@ -130,23 +131,27 @@ class App(customtkinter.CTk):
         self.sidebar_button_3 = customtkinter.CTkButton(self.sidebar_frame, text="Generate", command=self.save_overlap)
         self.sidebar_button_3.grid(row=3, column=0, pady=(5,15)) 
 
-
         self.sidebar_button_4 = customtkinter.CTkButton(self.sidebar_frame, text="Load last settings", command=self.load_square_locations_from_file)
         self.sidebar_button_4.grid(row=4, column=0, pady=5) 
-        self.sidebar_button_5 = customtkinter.CTkButton(self.sidebar_frame, text="Save settings", command=self.load_square_locations_from_file)
+        self.sidebar_button_5 = customtkinter.CTkButton(self.sidebar_frame, text="Save settings", command=self.save_square_locations_to_file)
         self.sidebar_button_5.grid(row=5, column=0, pady=5) 
+        self.sidebar_button_6 = customtkinter.CTkButton(self.sidebar_frame, text="Destroy all squares", command=self.destroy_all_square)
+        self.sidebar_button_6.grid(row=6, column=0, pady=5) 
+
+
+
         self.checkbox_1 = customtkinter.CTkCheckBox(self.sidebar_frame, text="Rescale square with image")
-        self.checkbox_1.grid(row=6, column=0, padx=(30,0), pady=5 ,sticky="nw")
+        self.checkbox_1.grid(row=7, column=0, padx=(30,0), pady=5 ,sticky="nw")
         self.checkbox_1.select()
         self.checkbox_2 = customtkinter.CTkCheckBox(self.sidebar_frame, text="Something 1")
-        self.checkbox_2.grid(row=7, column=0, padx=(30,0), pady=5,sticky="nw")
+        self.checkbox_2.grid(row=8, column=0, padx=(30,0), pady=5,sticky="nw")
         self.checkbox_2.select()
         self.checkbox_3 = customtkinter.CTkCheckBox(self.sidebar_frame, text="Something 2")
-        self.checkbox_3.grid(row=8, column=0, padx=(30,0), pady=5,sticky="nw")
+        self.checkbox_3.grid(row=9, column=0, padx=(30,0), pady=5,sticky="nw")
         self.checkbox_3.select()
 
         self.checkbox_slider_frame = customtkinter.CTkFrame(self.sidebar_frame)
-        self.checkbox_slider_frame.grid(row=9, column=0, padx=(20, 20), pady=(20, 0), sticky="nsew")
+        self.checkbox_slider_frame.grid(row=10, column=0, padx=(20, 20), pady=(20, 0), sticky="nsew")
 
         self.canvas = customtkinter.CTkCanvas(self, height=1000, bg="white")
         self.canvas.grid(row=0, column=1, padx=(20, 20), pady=(20, 20), sticky="nsew")
@@ -155,7 +160,7 @@ class App(customtkinter.CTk):
         self.squares = []
         self.zoom_factor = 0.2
         self.zoom_label = customtkinter.CTkLabel(self.sidebar_frame, text=f"Zoom Level: {self.zoom_factor*100}%", font=customtkinter.CTkFont(size=12))
-        self.zoom_label.grid(row=10, column=0, padx=20, pady=(20, 10))
+        self.zoom_label.grid(row=11, column=0, padx=20, pady=(20, 10))
 
 
     def on_double_click_create_app_boxes(self,square): 
@@ -274,12 +279,11 @@ class App(customtkinter.CTk):
         self.apply_zoom_img()
         self.apply_zoom_square()
 
+
     def apply_zoom_square(self):
         if(self.checkbox_1.get()):
             for square in self.squares:
                 square.change_zoom_factor(self.zoom_factor)
-
-
 
 
     def apply_zoom_img(self):
@@ -316,6 +320,12 @@ class App(customtkinter.CTk):
             self.squares.append(square)
         else: Square.remove(self,tag=name)
     
+    def destroy_all_square(self):
+        for index, square in enumerate(self.squares):
+            square.remove(square.tag)
+            Square.remove(self,square.tag)
+        for checkbox in self.checkboxes:
+            checkbox.deselect()
 
     def check_overlap(self):
         overlap_images = []
@@ -351,18 +361,18 @@ class App(customtkinter.CTk):
                 file_path = os.path.join(folder_path, f"img{i+1}_{index}.png")
                 index += 1
             cropped_image.save(file_path)
-        self.save_square_locations_to_file(folder_path)
 
 
-    def save_square_locations_to_file(self, folder_path):
+    def save_square_locations_to_file(self):
+        folder_path = os.path.join(os.getcwd(), "Sliced_Wallpaper")
         file_path = os.path.join(folder_path, "Last_Positions.txt")
         with open(file_path, "w") as file:
             for i, square in enumerate(self.squares):
-                zoom = square.zoom_factor
                 file.write(f"{i+1},{square.x},{square.y},{square.width},{square.height}\n")
 
 
     def load_square_locations_from_file(self):
+        self.destroy_all_square()
         folder_path = os.path.join(os.getcwd(), "Sliced_Wallpaper")
         file_path = os.path.join(folder_path, "Last_Positions.txt")   
         loaded_squares = []
@@ -370,7 +380,7 @@ class App(customtkinter.CTk):
             return loaded_squares
         with open(file_path, "r") as file:
             for line in file:
-                tag, x1, y1, x2, y2 = map(int, line.strip().split(","))
+                tag, x1, y1, x2, y2 = map(float, line.strip().split(","))
                 square = Square(self.canvas, x1, y1, x2, y2, color='red', tag=tag, zoom_factor=self.zoom_factor)
                 self.squares.append(square)
 
