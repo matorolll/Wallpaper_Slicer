@@ -3,6 +3,7 @@ import customtkinter
 from PIL import Image, ImageTk
 from tkinter import filedialog
 import os
+from screeninfo import get_monitors
 
 class Square:
     def __init__(self, canvas, x, y, width, height, color, tag, zoom_factor):
@@ -112,7 +113,7 @@ class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
         self.title("Wallpaper Spacer")
-        self.geometry(f"{1100}x{700}")
+        self.geometry(f"{1400}x{800}")
 
         # configure grid layout (4x4)
         self.grid_columnconfigure(1, weight=1)
@@ -143,10 +144,10 @@ class App(customtkinter.CTk):
         self.checkbox_1 = customtkinter.CTkCheckBox(self.sidebar_frame, text="Rescale square with image")
         self.checkbox_1.grid(row=7, column=0, padx=(30,0), pady=5 ,sticky="nw")
         self.checkbox_1.select()
-        self.checkbox_2 = customtkinter.CTkCheckBox(self.sidebar_frame, text="Something 1")
+        self.checkbox_2 = customtkinter.CTkCheckBox(self.sidebar_frame, text="Feature 1")
         self.checkbox_2.grid(row=8, column=0, padx=(30,0), pady=5,sticky="nw")
         self.checkbox_2.select()
-        self.checkbox_3 = customtkinter.CTkCheckBox(self.sidebar_frame, text="Something 2")
+        self.checkbox_3 = customtkinter.CTkCheckBox(self.sidebar_frame, text="Feature 2")
         self.checkbox_3.grid(row=9, column=0, padx=(30,0), pady=5,sticky="nw")
         self.checkbox_3.select()
 
@@ -167,26 +168,25 @@ class App(customtkinter.CTk):
         self.old_width = square.width
         self.old_height = square.height
 
-        self.edit_width_slider_text = customtkinter.CTkLabel(self.sidebar_frame, text=f"Width: {square.width}", font=customtkinter.CTkFont(size=20, weight="bold"))
-        self.edit_width_slider_text.grid(row=6, column=0, padx=(20, 10), pady=(10, 10), sticky="ew")
+        self.edit_width_slider_text = customtkinter.CTkLabel(self.sidebar_frame, text=f"Width: {square.width}", font=customtkinter.CTkFont(size=12, weight="bold"))
+        self.edit_width_slider_text.grid(row=12, column=0, padx=(20, 10), sticky="ew")
         self.edit_width_slider = customtkinter.CTkSlider(self.sidebar_frame,from_=0, to=1, number_of_steps=20, command=lambda value: self.change_square_size(square,"width"))
-        self.edit_width_slider.grid(row=7, column=0, padx=(20, 10), pady=(10, 10), sticky="ew")
+        self.edit_width_slider.grid(row=13, column=0, padx=(20, 10), sticky="ew")
         self.edit_width_slider_text.bind("<Double-Button-1>", command=lambda value: self.change_square_size_precisely(square,"width"))
 
-        self.edit_height_slider_text = customtkinter.CTkLabel(self.sidebar_frame, text=f"Height: {square.height}", font=customtkinter.CTkFont(size=20, weight="bold"))
-        self.edit_height_slider_text.grid(row=8, column=0, padx=(20, 10), pady=(10, 10), sticky="ew")
+        self.edit_height_slider_text = customtkinter.CTkLabel(self.sidebar_frame, text=f"Height: {square.height}", font=customtkinter.CTkFont(size=12, weight="bold"))
+        self.edit_height_slider_text.grid(row=14, column=0, padx=(20, 10), sticky="ew")
         self.edit_height_slider = customtkinter.CTkSlider(self.sidebar_frame,from_=0, to=1, number_of_steps=20,  command=lambda value: self.change_square_size(square,"height"))
-        self.edit_height_slider.grid(row=9, column=0, padx=(20, 10), pady=(10, 10), sticky="ew") 
+        self.edit_height_slider.grid(row=15, column=0, padx=(20, 10), sticky="ew") 
         self.edit_height_slider_text.bind("<Double-Button-1>", command=lambda value: self.change_square_size_precisely(square,"height"))
 
-        self.edit_size_slider_text = customtkinter.CTkLabel(self.sidebar_frame, text=f"Both: {square.width}x{square.height}", font=customtkinter.CTkFont(size=20, weight="bold"))
-        self.edit_size_slider_text.grid(row=10, column=0, padx=(20, 10), pady=(10, 10), sticky="ew")
+        self.edit_size_slider_text = customtkinter.CTkLabel(self.sidebar_frame, text=f"Both: {square.width}x{square.height}", font=customtkinter.CTkFont(size=12, weight="bold"))
+        self.edit_size_slider_text.grid(row=16, column=0, padx=(20, 10), sticky="ew")
         self.edit_size_slider = customtkinter.CTkSlider(self.sidebar_frame,from_=0, to=1, number_of_steps=20,  command=lambda value: self.change_square_size(square,"both"))
-        self.edit_size_slider.grid(row=11, column=0, padx=(20, 10), pady=(10, 10), sticky="ew") 
+        self.edit_size_slider.grid(row=17, column=0, padx=(20, 10), pady=(0, 10), sticky="ew") 
         self.edit_size_slider_text.bind("<Double-Button-1>", command=lambda value: self.change_square_size_precisely(square,"both"))
 
 
-    #TO CHANGEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
     def change_square_size_precisely(self,square,scalling):
         if(scalling == "width"):
             popup_window = tkinter.Tk()
@@ -197,6 +197,9 @@ class App(customtkinter.CTk):
                     new_width = float(entry.get())
                     if new_width >= 0:
                         square.width = new_width
+                        square.collision_handler()
+                        self.edit_width_slider_text.configure(text=f"Width: {int(square.width)}")
+                        self.edit_size_slider_text.configure(text=f"Both: {int(square.width)}x{int(square.height)}")
                         popup_window.destroy()
                     else:
                         raise ValueError("Width must be a non-negative number.")
@@ -220,6 +223,9 @@ class App(customtkinter.CTk):
                     new_height = float(entry.get())
                     if new_height >= 0:
                         square.height = new_height
+                        square.collision_handler()
+                        self.edit_height_slider_text.configure(text=f"Height: {int(square.height)}")
+                        self.edit_size_slider_text.configure(text=f"Both: {int(square.width)}x{int(square.height)}")
                         popup_window.destroy()
                     else:
                         raise ValueError("Width must be a non-negative number.")
@@ -235,10 +241,38 @@ class App(customtkinter.CTk):
 
 
         if(scalling == "both"):
-            square.width = int(self.edit_size_slider.get() * (self.old_width+self.old_width))
-            square.height = int(self.edit_size_slider.get() * (self.old_height+self.old_height))
-            self.edit_size_slider_text.configure(text=f"Both: {square.width}x{square.height}")
-        square.update()
+            popup_window = tkinter.Tk()
+            popup_window.title("Precise Size Edit")
+            popup_window.geometry("300x250")
+            def save_changes():
+                try:
+                    new_width = float(entry.get())
+                    new_height = float(entry2.get())
+                    if new_width >= 0 and new_height:
+                        square.width = new_width
+                        square.height = new_height
+                        square.collision_handler()
+                        self.edit_width_slider_text.configure(text=f"Width: {int(square.width)}")
+                        self.edit_height_slider_text.configure(text=f"Height: {int(square.height)}")
+                        self.edit_size_slider_text.configure(text=f"Both: {int(square.width)}x{int(square.height)}")
+                        popup_window.destroy()
+                    else:
+                        raise ValueError("Both value must be a non-negative number.")
+                except ValueError as e:
+                    tkinter.messagebox.showerror("Error", str(e))
+            label = tkinter.Label(popup_window, text="Enter new width:")
+            label.pack(pady=10)
+            entry = tkinter.Entry(popup_window)
+            entry.pack(pady=5)
+
+            label2 = tkinter.Label(popup_window, text="Enter new height:")
+            label2.pack(pady=10)
+            entry2 = tkinter.Entry(popup_window)
+            entry2.pack(pady=5)
+
+            button = tkinter.Button(popup_window, text="Save", command=save_changes)
+            button.pack(pady=10)
+            popup_window.mainloop()
 
 
     def change_square_size(self,square,scalling):
@@ -252,7 +286,7 @@ class App(customtkinter.CTk):
             square.width = int(self.edit_size_slider.get() * (self.old_width+self.old_width))
             square.height = int(self.edit_size_slider.get() * (self.old_height+self.old_height))
             self.edit_size_slider_text.configure(text=f"Both: {square.width}x{square.height}")
-        square.update()
+        square.collision_handler()
 
 
     def show_square_data(self, square):
@@ -303,8 +337,7 @@ class App(customtkinter.CTk):
 
 
     def getting_screen_data(self):
-        import gettingsScreens
-        listOfMonitors = gettingsScreens.get_screen_info()
+        listOfMonitors = self.get_screen_info()
         self.checkboxes = []
         for i, monitors in enumerate(listOfMonitors):
             checkbox_name = f"checkbox_{i+1}"
@@ -383,6 +416,16 @@ class App(customtkinter.CTk):
                 tag, x1, y1, x2, y2 = map(float, line.strip().split(","))
                 square = Square(self.canvas, x1, y1, x2, y2, color='red', tag=tag, zoom_factor=self.zoom_factor)
                 self.squares.append(square)
+
+
+    def get_screen_info(self):
+        screen_info = []
+        for i, monitor in enumerate(get_monitors(), 1):
+            name = monitor.name.replace("\\\\.\\", "")
+            width = monitor.width
+            height = monitor.height
+            screen_info.append((i, name, width, height))
+        return screen_info
 
 
 if __name__ == "__main__":
