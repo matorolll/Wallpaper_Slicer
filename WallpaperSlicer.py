@@ -3,7 +3,6 @@ import customtkinter
 from PIL import Image, ImageTk
 from tkinter import filedialog
 import os
-import WallpaperSaver
 
 class Square:
     def __init__(self, canvas, x, y, width, height, color, tag, zoom_factor):
@@ -121,26 +120,33 @@ class App(customtkinter.CTk):
 
         self.sidebar_frame = customtkinter.CTkFrame(self, width=140, corner_radius=0)
         self.sidebar_frame.grid(row=0, column=0, rowspan=4, sticky="nsew")
-        self.sidebar_frame.grid_rowconfigure(4, weight=1)
+        self.sidebar_frame.grid_rowconfigure(9, weight=1)
         self.logo_label = customtkinter.CTkLabel(self.sidebar_frame, text="Side panel", font=customtkinter.CTkFont(size=20, weight="bold"))
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
-        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Load screens info", command=self.getting_screen_data)
-        self.sidebar_button_1.grid(row=1, column=0, padx=20, pady=10)
-        self.sidebar_button_2 = customtkinter.CTkButton(self.sidebar_frame, text="Load screens image", command=self.getting_image_data)
-        self.sidebar_button_2.grid(row=2, column=0, padx=20, pady=10)   
+        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Load monitors info", command=self.getting_screen_data)
+        self.sidebar_button_1.grid(row=1, column=0, pady=5)
+        self.sidebar_button_2 = customtkinter.CTkButton(self.sidebar_frame, text="Upload Image", command=self.getting_image_data)
+        self.sidebar_button_2.grid(row=2, column=0, pady=5)   
+        self.sidebar_button_3 = customtkinter.CTkButton(self.sidebar_frame, text="Generate", command=self.save_overlap)
+        self.sidebar_button_3.grid(row=3, column=0, pady=(5,15)) 
 
-        self.sidebar_button_3 = customtkinter.CTkButton(self.sidebar_frame, text="Load last settings", command=self.load_square_locations_from_file)
-        self.sidebar_button_3.grid(row=3, column=0, padx=20, pady=10)   
-        
-        self.checkbox_0 = customtkinter.CTkButton(self.sidebar_frame, text="Crop Image", command=self.save_overlap)
-        self.checkbox_0.grid(row=4, column=0, pady=(20, 0), padx=20, sticky="n")
 
+        self.sidebar_button_4 = customtkinter.CTkButton(self.sidebar_frame, text="Load last settings", command=self.load_square_locations_from_file)
+        self.sidebar_button_4.grid(row=4, column=0, pady=5) 
+        self.sidebar_button_5 = customtkinter.CTkButton(self.sidebar_frame, text="Save settings", command=self.load_square_locations_from_file)
+        self.sidebar_button_5.grid(row=5, column=0, pady=5) 
         self.checkbox_1 = customtkinter.CTkCheckBox(self.sidebar_frame, text="Rescale square with image")
-        self.checkbox_1.grid(row=5, column=0, pady=(20, 0), padx=20, sticky="n")
+        self.checkbox_1.grid(row=6, column=0, padx=(30,0), pady=5 ,sticky="nw")
         self.checkbox_1.select()
+        self.checkbox_2 = customtkinter.CTkCheckBox(self.sidebar_frame, text="Something 1")
+        self.checkbox_2.grid(row=7, column=0, padx=(30,0), pady=5,sticky="nw")
+        self.checkbox_2.select()
+        self.checkbox_3 = customtkinter.CTkCheckBox(self.sidebar_frame, text="Something 2")
+        self.checkbox_3.grid(row=8, column=0, padx=(30,0), pady=5,sticky="nw")
+        self.checkbox_3.select()
 
         self.checkbox_slider_frame = customtkinter.CTkFrame(self.sidebar_frame)
-        self.checkbox_slider_frame.grid(row=6, column=0, padx=(20, 20), pady=(20, 0), sticky="nsew")
+        self.checkbox_slider_frame.grid(row=9, column=0, padx=(20, 20), pady=(20, 0), sticky="nsew")
 
         self.canvas = customtkinter.CTkCanvas(self, height=1000, bg="white")
         self.canvas.grid(row=0, column=1, padx=(20, 20), pady=(20, 20), sticky="nsew")
@@ -149,7 +155,7 @@ class App(customtkinter.CTk):
         self.squares = []
         self.zoom_factor = 0.2
         self.zoom_label = customtkinter.CTkLabel(self.sidebar_frame, text=f"Zoom Level: {self.zoom_factor*100}%", font=customtkinter.CTkFont(size=12))
-        self.zoom_label.grid(row=6, column=0, padx=20, pady=(20, 10))
+        self.zoom_label.grid(row=10, column=0, padx=20, pady=(20, 10))
 
 
     def on_double_click_create_app_boxes(self,square): 
