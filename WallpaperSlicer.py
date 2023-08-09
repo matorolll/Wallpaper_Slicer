@@ -115,7 +115,6 @@ class App(customtkinter.CTk):
         self.title("Wallpaper Spacer")
         self.geometry(f"{1400}x{800}")
 
-        # configure grid layout (4x4)
         self.grid_columnconfigure(1, weight=1)
         self.grid_columnconfigure((2, 3), weight=0)
         self.grid_rowconfigure((0, 1, 2), weight=1)
@@ -141,14 +140,14 @@ class App(customtkinter.CTk):
 
 
 
-        self.checkbox_1 = customtkinter.CTkCheckBox(self.sidebar_frame, text="Rescale square with image")
-        self.checkbox_1.grid(row=7, column=0, padx=(30,0), pady=5 ,sticky="nw")
+        self.checkbox_1 = customtkinter.CTkCheckBox(self.sidebar_frame, text="Rescale square")
+        self.checkbox_1.grid(row=7, column=0, padx=(50,0), pady=(15,5) ,sticky="nw")
         self.checkbox_1.select()
         self.checkbox_2 = customtkinter.CTkCheckBox(self.sidebar_frame, text="Feature 1")
-        self.checkbox_2.grid(row=8, column=0, padx=(30,0), pady=5,sticky="nw")
+        self.checkbox_2.grid(row=8, column=0, padx=(50,0), pady=5,sticky="nw")
         self.checkbox_2.select()
         self.checkbox_3 = customtkinter.CTkCheckBox(self.sidebar_frame, text="Feature 2")
-        self.checkbox_3.grid(row=9, column=0, padx=(30,0), pady=5,sticky="nw")
+        self.checkbox_3.grid(row=9, column=0, padx=(50,0), pady=5,sticky="nw")
         self.checkbox_3.select()
 
         self.checkbox_slider_frame = customtkinter.CTkFrame(self.sidebar_frame)
