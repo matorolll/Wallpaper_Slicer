@@ -1,4 +1,3 @@
-![image](https://github.com/matorolll/Wallpaper_Slicer/assets/121674957/65ab1887-eda6-4c5d-9642-83bcfbb93a55)# Wallpaper_Slicer
 Desktop application written in python to simplify the process of creating wallpaper for multiple screens
 
 ![image](https://github.com/matorolll/Wallpaper_Slicer/assets/121674957/1a26ce9d-8d40-4282-abb5-d9e162135179)
@@ -6,8 +5,6 @@ Desktop application written in python to simplify the process of creating wallpa
 Main windows with settings to load monitors setup, rescale monitors in width and height. Button to upload image to canvas, rescale by mouse scroll.
 Generating the image located on the monitor blocks, we can also add more for the screen that has not been detected.
 Lower options to load and save the position to cut to simplify the change of wallpaper in the future.
-
-![image](https://github.com/matorolll/Wallpaper_Slicer/assets/121674957/b45766cc-3eae-42b6-a6bb-754eaae16dd5)
 
 ![image](https://github.com/matorolll/Wallpaper_Slicer/assets/121674957/03114318-da0a-4456-a5b4-3775278d9ea7)
 
